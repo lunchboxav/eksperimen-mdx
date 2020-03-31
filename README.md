@@ -14,13 +14,6 @@ Kesimpulan saat ini:
 ```
 
 Perlu diconvert menjadi:
-
-```
-
-```
-
+\`\`\`
 ...
-
-```
-
-```
+\`\`\`
