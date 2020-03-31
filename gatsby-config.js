@@ -5,8 +5,16 @@ module.exports = {
     author: `@gatsbyjs`,
   },
   plugins: [
-    `gatsby-plugin-mdx`,
     `gatsby-plugin-react-helmet`,
+    {
+      resolve: `gatsby-plugin-mdx`,
+      options: {
+        extensions: ['.mdx'],
+        rehypePlugins: [
+          require('rehype-slug'),
+        ]
+      }
+    },
     {
       resolve: `gatsby-source-filesystem`,
       options: {

@@ -1,0 +1,95 @@
+---
+title: Ingress Gateway
+description: Configurations to build an ingress gateway.
+location: https://tetrate.io/docs/reference/config/gateway/v1/ingress-gateway.html
+---
+
+`IngressGateway` configures a workload to act as a gateway for
+traffic entering the mesh. The ingress gateway also provides basic
+API gateway functionalities such as JWT token validation, rate
+limiting, and request authorization. Gateways in privileged
+workspaces can route to services outside the workspace while those
+in unprivileged workspaces can only route to services inside the
+workspace.
+
+The following example declares an ingress gateway running on pods
+with `app: gateway` labels in the `ns1` namespace. The gateway
+exposes a host `bookinfo.com` on https port 8443. TLS is terminated
+using the certificates in the Kubernetes secret
+`bookinfo-certs`. Clients are authenticated using JWT tokens, whose
+keys are obtained from the OIDC provider `www.googleapis.com`. The
+request is then authorized by an the user's authorization engine
+hosted at `https://internal.example.com` before being forwarded to
+the `productpage` service in the backend.
+
+```yaml
+apiVersion: gateway.tsb.io/v1
+kind: IngressGateway
+metadata:
+  name: ingress-bookinfo
+  group: g1
+  workspace: w1
+  tenant: mycompany
+spec:
+  workloadSelector:
+    namespace: ns1
+    labels:
+      app: gateway
+  http:
+    - hostname: bookinfo.com
+      tls:
+        mode: SIMPLE
+        secretName: bookinfo-certs
+      authentication:
+        jwt:
+          issuer: https:www.googleapis.com/oauth2/v1/certs
+          audience: bookinfo
+      authorization:
+        external:
+          uri: https:company.com/authz
+          includeRequestHeaders:
+            - Authorization # forwards the header to the authorization service.
+      routing:
+        rules:
+          - route:
+              host: ns1/productpage.ns1.svc.cluster.local
+```
+
+If the `productpage.ns1` service on Kubernetes has a `ServiceRoute`
+with multiple subsets and weights, the traffic will be split across
+the subsets accordingly.
+
+TODO(rshriram): Add lot more examples in the gateway section.
+
+## IngressGateway
+
+<table>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id="IngressGateway-workload_selector">
+      <td><code>workloadSelector</code></td>
+      <td><code><a href="https://tetrate.io/docs/reference/config/types/v1/types.html#WorkloadSelector">tetrate.api.tsb.types.v1.WorkloadSelector</a></code></td>
+      <td>
+      <p>Specify the gateway workloads (pod labels and Kubernetes
+      namespace) under the gateway group that should be configured with
+      this ingress gateway. There can be only one ingress gateway for a
+      given workload selector.</p>
+      </td>
+    </tr>
+    <tr id="IngressGateway-http">
+      <td><code>http</code></td>
+      <td><code><a href="#HttpServer">HttpServer[]</a></code></td>
+      <td>
+      <p>One or more HTTP or HTTPS servers exposed by the gateway. The
+      server exposes configuration for TLS termination, request
+      authentication/authorization, HTTP routing, etc.</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
